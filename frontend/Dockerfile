@@ -6,19 +6,24 @@
     COPY package*.json ./
     RUN npm install
     
+    # Copy environment variables BEFORE build
+    COPY .env.docker .env
+    
+    # Copy full project
     COPY . .
-    RUN npm run build     # <-- builds the dist folder
+    
+    # Build Vite dist folder
+    RUN npm run build
     
     # ------------------- Stage 2: Serve with Nginx -------------------------
     FROM nginx:alpine
     
-    # Copy the built frontend files to nginx www folder
-    COPY --from=build /app/dist /usr/share/nginx/html
-    
-    # Replace default Nginx config (optional but recommended)
+    # Copy custom nginx config
     COPY nginx.conf /etc/nginx/conf.d/default.conf
     
-    EXPOSE 80
+    # Copy build output
+    COPY --from=build /app/dist /usr/share/nginx/html
     
+    EXPOSE 80
     CMD ["nginx", "-g", "daemon off;"]
     
